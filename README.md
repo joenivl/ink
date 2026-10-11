@@ -167,31 +167,11 @@ verversingen per dag. Ververst het scherm toch al, omdat de agenda of de
 notities veranderd zijn of omdat je hem wekt, dan komt het nieuwste weer gewoon
 mee.
 
-### Takenlijst van buiten HA (CalDAV)
+### Takenlijst buiten HA (CalDAV)
 
-Een taak erbij of afgevinkt in een HA-lijst gaat meteen naar het scherm. Staat
-de lijst ergens anders (bijvoorbeeld Radicale via de CalDAV-integratie), dan
-ziet HA een wijziging pas bij zijn eigen ophaalronde. Wil je het meteen, laat
-dan wie de taak toevoegt daarna een webhook aanroepen. Zet in HA deze
-automatisering (verzin zelf een lange, geheime webhook-id):
-
-```yaml
-alias: Ink takenlijst verversen
-triggers:
-  - trigger: webhook
-    webhook_id: kies-een-lange-geheime-id
-    allowed_methods: [POST]
-    local_only: false
-actions:
-  - action: homeassistant.update_entity
-    target:
-      entity_id: todo.taken
-```
-
-De andere kant (bijvoorbeeld een bot) roept na elke wijziging
-`POST https://<jouw-ha>/api/webhook/kies-een-lange-geheime-id` aan. Die id kan
-alleen dit: de lijst laten verversen. HA moet daarvoor wel van buitenaf
-bereikbaar zijn (Nabu Casa, Tailscale of een tunnel).
+Een notitielijst mag ook een CalDAV-lijst zijn (bijvoorbeeld Radicale). Wat je
+op het scherm toevoegt of afvinkt staat er meteen; wijzigingen van buitenaf
+verschijnen bij de volgende ophaalronde van HA.
 
 ## Bediening
 
