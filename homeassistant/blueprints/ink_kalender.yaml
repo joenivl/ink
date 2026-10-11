@@ -91,14 +91,11 @@ triggers:
     entity_id: !input kalenders
     id: verstuur
   # Taak erbij of afgevinkt (de toestand = aantal open taken): meteen sturen.
+  # Een lijst van buiten HA (CalDAV) ziet HA pas bij zijn eigen ophaalronde;
+  # laat de andere kant dan een webhook aanroepen (zie README).
   - trigger: state
     entity_id: !input notitielijsten
     id: verstuur
-  # Lijsten van buiten HA (CalDAV, Todoist, ...) haalt HA zelf maar af en toe
-  # op; elke minuut verversen, zodat een nieuwe taak snel op het scherm staat.
-  - trigger: time_pattern
-    minutes: /1
-    id: lijsten
   - trigger: event
     event_type: esphome.ink_spraak
     id: spraak
@@ -123,22 +120,6 @@ variables:
   dagen: [maandag, dinsdag, woensdag, donderdag, vrijdag, zaterdag, zondag]
 
 actions:
-  # ------------------------------------------------ takenlijsten verversen
-  # Verandert er iets, dan stuurt de state-trigger hierboven het scherm bij.
-  - if:
-      - condition: template
-        value_template: "{{ trigger.id == 'lijsten' }}"
-    then:
-      - if:
-          - condition: template
-            value_template: "{{ notitielijsten | count > 0 }}"
-        then:
-          - action: homeassistant.update_entity
-            continue_on_error: true
-            target:
-              entity_id: "{{ notitielijsten }}"
-      - stop: Lijsten ververst
-
   # ------------------------------------------------ ingesproken zin -> voorstel
   - if:
       - condition: template
