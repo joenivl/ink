@@ -91,8 +91,6 @@ triggers:
     entity_id: !input kalenders
     id: verstuur
   # Taak erbij of afgevinkt (de toestand = aantal open taken): meteen sturen.
-  # Een lijst van buiten HA (CalDAV) ziet HA pas bij zijn eigen ophaalronde;
-  # laat de andere kant dan een webhook aanroepen (zie README).
   - trigger: state
     entity_id: !input notitielijsten
     id: verstuur
@@ -277,6 +275,12 @@ actions:
               entity_id: "{{ notitielijsten[0] }}"
             data:
               item: "{{ d.titel }}"
+          # Een lijst buiten HA (CalDAV) houdt HA bij als kopie; die meteen
+          # verversen, anders mist de nieuwe notitie op het scherm.
+          - action: homeassistant.update_entity
+            continue_on_error: true
+            target:
+              entity_id: "{{ notitielijsten[0] }}"
       - if:
           - condition: template
             value_template: "{{ (d.soort | default('') or 'afspraak') == 'afspraak' and (d.begin | default('')) == '' }}"
@@ -385,6 +389,10 @@ actions:
           item: "{{ trigger.event.data.uid }}"
           status: >-
             {{ 'needs_action' if trigger.event.data.klaar | default('ja') == 'nee' else 'completed' }}
+      - action: homeassistant.update_entity
+        continue_on_error: true
+        target:
+          entity_id: "{{ trigger.event.data.lijst }}"
 
   # ------------------------------------------------ agenda naar het scherm
   # Het scherm ververst alleen als er echt iets veranderd is.
