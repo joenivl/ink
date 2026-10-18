@@ -155,6 +155,8 @@ actions:
             - Titel: kort, met hoofdletter, zonder datum en tijd. Namen met hoofdletter.
 
             Bij een notitie: alleen de titel, kort, met hoofdletter, zonder het woord "notitie".
+            Moet het vandaag ("vandaag nog", "straks"), zet dan bij datum de datum van vandaag;
+            anders datum leeg laten.
 
             Zin: "{{ tekst }}"
           structure:
@@ -170,7 +172,7 @@ actions:
               selector:
                 text:
             datum:
-              description: Datum als JJJJ-MM-DD (alleen bij een afspraak)
+              description: Datum als JJJJ-MM-DD (bij een afspraak; bij een notitie alleen als die vandaag moet)
               selector:
                 text:
             begintijd:
@@ -237,7 +239,8 @@ actions:
                     continue_on_error: true
                     data:
                       titel: "{{ titel }}"
-                      datum: ""
+                      # Alleen vandaag telt (wordt de vervaldatum bij het opslaan).
+                      datum: "{{ datum if datum == now().strftime('%Y-%m-%d') else '' }}"
                       begin: ""
                       eind: ""
                       gehoord: "{{ tekst }}"
@@ -270,11 +273,41 @@ actions:
           - condition: template
             value_template: "{{ (d.soort | default('') or 'afspraak') == 'notitie' }}"
         then:
-          - action: todo.add_item
-            target:
-              entity_id: "{{ notitielijsten[0] }}"
-            data:
-              item: "{{ d.titel }}"
+          # Zoals de WhatsApp-assistent: moet het vandaag, dan als vervaldatum;
+          # anders "Toegevoegd op: …" in de beschrijving. Alleen als de lijst
+          # dat kan (supported_features: 16 = vervaldatum, 64 = beschrijving),
+          # anders weigert HA de hele taak.
+          - variables:
+              lijst: "{{ notitielijsten[0] }}"
+              kan: "{{ state_attr(notitielijsten[0], 'supported_features') | int(0) }}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ (d.datum | default('')) == now().strftime('%Y-%m-%d') and kan | bitwise_and(16) > 0 }}
+                sequence:
+                  - action: todo.add_item
+                    target:
+                      entity_id: "{{ lijst }}"
+                    data:
+                      item: "{{ d.titel }}"
+                      due_date: "{{ d.datum }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ kan | bitwise_and(64) > 0 }}"
+                sequence:
+                  - action: todo.add_item
+                    target:
+                      entity_id: "{{ lijst }}"
+                    data:
+                      item: "{{ d.titel }}"
+                      description: "Toegevoegd op: {{ now().strftime('%d-%m-%Y') }}"
+            default:
+              - action: todo.add_item
+                target:
+                  entity_id: "{{ lijst }}"
+                data:
+                  item: "{{ d.titel }}"
           # Een lijst buiten HA (CalDAV) houdt HA bij als kopie; die meteen
           # verversen, anders mist de nieuwe notitie op het scherm.
           - action: homeassistant.update_entity

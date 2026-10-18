@@ -1496,7 +1496,8 @@ inline void teken_venster(Display &it, const Staat &s, const Fonts &f) {
       wanneer += "  ·  " + v.begin + (v.eind.empty() ? "" : " – " + v.eind);
     tekst(it, x, y, f.kop, ZWART, WIT, TextAlign::TOP_LEFT, afkappen(it, f.kop, wanneer, w));
   } else {
-    tekst(it, x, y, f.kop, ZWART, WIT, TextAlign::TOP_LEFT, "op de notitielijst");
+    tekst(it, x, y, f.kop, ZWART, WIT, TextAlign::TOP_LEFT,
+          v.datum.empty() ? "op de notitielijst" : "op de notitielijst  ·  vandaag");
   }
   y += 54;
   if (!v.gehoord.empty())
