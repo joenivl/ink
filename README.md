@@ -71,6 +71,7 @@ zie [Preview en tests](#preview-en-tests).*
 | `esphome/secrets.example.yaml` | Voorbeeld voor `secrets.yaml` |
 | `homeassistant/blueprints/ink_kalender.yaml` | Blueprint: agenda naar het scherm, spraak naar afspraak |
 | `homeassistant/packages/ink.yaml` | Haalt de blueprint elke nacht van GitHub |
+| `homeassistant/packages/voetbal.yaml`, `homeassistant/voetbal.py` | Optioneel: voetbalwedstrijden als kalender |
 | `tools/preview/` | Tests en PNG-previews zonder hardware |
 
 ## Installatie
@@ -172,6 +173,35 @@ mee.
 Een notitielijst mag ook een CalDAV-lijst zijn (bijvoorbeeld Radicale). Wat je
 op het scherm toevoegt of afvinkt staat er meteen; wijzigingen van buitenaf
 verschijnen bij de volgende ophaalronde van HA.
+
+### Voetbalwedstrijden
+
+De wedstrijden van een voetbalteam kunnen gratis in een eigen kalender komen. In de
+voetbal.nl-app kost agenda-synchronisatie geld. Elk uur haalt HA het programma uit
+Sportlink (de bron achter voetbal.nl) en zet het in een `.ics`-bestand. De integratie
+*Remote Calendar* leest dat bestand als kalender. Je ziet dan bijvoorbeeld
+"⚽ Uit bij Urk O9-2" met het sportpark als locatie, en in de details het veld, de
+kleedkamer en de verzameltijd (als de club die invult). Verplaatste wedstrijden
+verschuiven vanzelf, en een afgelaste wedstrijd krijgt "(afgelast)" in de titel.
+Gespeelde wedstrijden blijven nog vijf weken staan.
+
+1. Zet `homeassistant/packages/voetbal.yaml` in HA als `/config/packages/voetbal.yaml`.
+   Zet daarin bij `--team` je team, zonder clubnaam (bijv. `O9-2`; de oude naam
+   `JO9-2` mag ook). Klopt de naam niet, dan krijg je in HA een melding met alle teams.
+2. Bestaat de map `/config/www` nog niet? Maak hem aan (bijvoorbeeld met de
+   *File editor*) en herstart HA. HA deelt die map alleen als hij bij het opstarten al
+   bestaat.
+3. Voeg de integratie **Remote Calendar** toe. Kies als naam `Voetbal` en als URL
+   `http://localhost:8123/local/ink-voetbal.ics`. Gebruikt HA zelf https, vul dan je
+   eigen https-adres in.
+4. Kies `calendar.voetbal` erbij bij de kalenders in de Ink-automatisering.
+
+De gegevens komen nu via de website van asv Dronten. Die vraagt Sportlink op met de
+client_id van de club; het script gebruikt dezelfde openbare sleutel als de website.
+Voor een andere club zet je `--client-id <code>` achter het commando. De code staat
+vaak in de broncode van de clubsite, of het wedstrijdsecretariaat weet hem. Let op:
+alles in `/config/www` is zonder inloggen te openen. Hier is dat geen probleem, want het
+programma staat ook gewoon op de clubsite.
 
 ## Bediening
 
